@@ -70,6 +70,17 @@ export const FileUpload = ({ onFileSelect, onUploadSuccess }: FileUploadProps) =
 
   const uploadToSupabase = async (file: File): Promise<{ success: boolean; review_id?: string }> => {
     try {
+      // First, sign in anonymously to satisfy RLS policies
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        const { error: signInError } = await supabase.auth.signInAnonymously();
+        if (signInError) {
+          console.error('Anonymous sign-in failed:', signInError);
+          throw signInError;
+        }
+      }
+
       // Upload file to Supabase Storage
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
@@ -79,7 +90,10 @@ export const FileUpload = ({ onFileSelect, onUploadSuccess }: FileUploadProps) =
         .from('invoices')
         .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw uploadError;
+      }
 
       // Create a review record
       const { data: reviewData, error: reviewError } = await supabase
@@ -92,7 +106,10 @@ export const FileUpload = ({ onFileSelect, onUploadSuccess }: FileUploadProps) =
         .select()
         .maybeSingle();
 
-      if (reviewError) throw reviewError;
+      if (reviewError) {
+        console.error('Review insert error:', reviewError);
+        throw reviewError;
+      }
 
       return { success: true, review_id: reviewData?.review_id };
     } catch (error) {
@@ -114,13 +131,13 @@ export const FileUpload = ({ onFileSelect, onUploadSuccess }: FileUploadProps) =
       abortControllerRef.current.abort();
     }
 
-    // Create new abort controller with shorter timeout (30 seconds)
+    // Create new abort controller with extended timeout (2 minutes)
     abortControllerRef.current = new AbortController();
     const timeoutId = setTimeout(() => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
-    }, 30000); // 30 seconds timeout
+    }, 120000); // 2 minutes timeout
 
     const formData = new FormData();
     formData.append('file', file, file.name);
@@ -197,9 +214,15 @@ export const FileUpload = ({ onFileSelect, onUploadSuccess }: FileUploadProps) =
       return true;
     } catch (error: any) {
       clearTimeout(timeoutId);
-      console.warn('Webhook failed, attempting Supabase fallback:', error);
+
+      const errorMessage = error.name === 'AbortError'
+        ? 'Webhook timed out after 2 minutes'
+        : `Webhook connection failed: ${error.message || 'Network error'}`;
+
+      console.warn(errorMessage, error);
 
       // Fallback to Supabase Storage
+      console.log('Attempting Supabase Storage fallback...');
       const fallbackResult = await uploadToSupabase(file);
 
       if (fallbackResult.success) {
@@ -217,7 +240,7 @@ export const FileUpload = ({ onFileSelect, onUploadSuccess }: FileUploadProps) =
         setIsUploading(false);
         return true; // Continue to next step
       } else {
-        setUploadError('Failed to upload file. Please try again.');
+        setUploadError('Failed to upload file. Please try again or check your connection.');
         setWebhookError(true);
         setIsUploading(false);
         return false;
