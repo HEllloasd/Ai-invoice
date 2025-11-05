@@ -21,6 +21,12 @@ export const UploadHistory = () => {
 
   useEffect(() => {
     fetchHistory();
+
+    const interval = setInterval(() => {
+      fetchHistory();
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const fetchHistory = async () => {
@@ -39,6 +45,21 @@ export const UploadHistory = () => {
       setIsLoading(false);
     }
   };
+
+  const refreshHistory = () => {
+    fetchHistory();
+  };
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        refreshHistory();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -168,9 +189,17 @@ export const UploadHistory = () => {
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-8">
-      <div className="flex items-center gap-3 mb-6">
-        <Clock className="w-6 h-6 text-blue-600" />
-        <h2 className="text-2xl font-semibold text-gray-900">Upload History</h2>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <Clock className="w-6 h-6 text-blue-600" />
+          <h2 className="text-2xl font-semibold text-gray-900">Upload History</h2>
+        </div>
+        <button
+          onClick={refreshHistory}
+          className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+        >
+          Refresh
+        </button>
       </div>
 
       {history.length === 0 ? (
