@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -125,16 +126,19 @@ Deno.serve(async (req: Request) => {
       const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
       if (supabaseUrl && supabaseKey) {
-        const { createClient } = await import("npm:@supabase/supabase-js@2");
         const supabase = createClient(supabaseUrl, supabaseKey);
 
-        await supabase.from("xero_tokens").insert({
+        const { error: insertError } = await supabase.from("xero_tokens").insert({
           access_token: tokens.access_token,
           refresh_token: tokens.refresh_token,
           expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
           tenant_id: tenantId,
           token_type: tokens.token_type,
         });
+
+        if (insertError) {
+          console.error("Error storing tokens:", insertError);
+        }
       }
 
       // Redirect back to app with success
