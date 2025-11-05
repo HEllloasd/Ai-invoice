@@ -1,6 +1,6 @@
 export const WEBHOOKS = {
   pdf: {
-    dropbox: 'https://good-kids-play.loca.lt/webhook-test/pdf-upload',
+    dropbox: 'https://busy-feet-tie.loca.lt/webhook-test/pdf-upload',
   },
   review: {
     result: 'https://good-kids-play.loca.lt/webhook-test/review-result',
