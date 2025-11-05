@@ -8,8 +8,7 @@ interface HistoryItem {
   review_id: string;
   status: string;
   created_at: string;
-  final_erp: any;
-  final_crm: any;
+  final: any;
   file_name: string;
 }
 
@@ -33,7 +32,7 @@ export const UploadHistory = () => {
     try {
       const { data, error } = await supabase
         .from('reviews')
-        .select('review_id, status, created_at, final_erp, final_crm, file_name')
+        .select('review_id, status, created_at, final, file_name')
         .order('created_at', { ascending: false })
         .limit(7);
 
@@ -120,7 +119,7 @@ export const UploadHistory = () => {
       console.error('Error sending choice to webhook:', error);
     }
 
-    const xeroData = item.final_erp || {};
+    const xeroData = item.final || {};
     const blob = new Blob([JSON.stringify(xeroData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
