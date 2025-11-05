@@ -146,7 +146,8 @@ Deno.serve(async (req: Request) => {
     // Use invoice_data from request if provided, otherwise use data from database
     let invoiceData;
     if (invoice_data) {
-      invoiceData = invoice_data;
+      // If invoice_data is an array, take the first element
+      invoiceData = Array.isArray(invoice_data) ? invoice_data[0] : invoice_data;
       console.log("Using invoice data from request");
     } else {
       invoiceData = review.final?.ERP || review.final;
