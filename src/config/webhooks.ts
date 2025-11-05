@@ -1,6 +1,6 @@
 export const WEBHOOKS = {
   pdf: {
-    dropbox: 'https://many-hotels-play.loca.lt/pdf-upload',
+    dropbox: 'https://many-hotels-play.loca.lt/webhook-test/pdf-upload',
   },
   review: {
     result: 'https://many-hotels-play.loca.lt/webhook-test/review-result',
