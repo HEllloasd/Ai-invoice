@@ -272,7 +272,7 @@ export const Review = () => {
             {isEditing ? (
               <div className="space-y-6">
                 <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Matched Data</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Similar Output</h3>
                   {matchedError && (
                     <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
                       {matchedError}
@@ -289,62 +289,80 @@ export const Review = () => {
                   />
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">AI Model 1</h3>
-                  {ai1DiffError && (
-                    <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
-                      {ai1DiffError}
+                <div className="bg-gray-50 border border-gray-300 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-6">Different Output</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h4 className="text-md font-semibold text-gray-900 mb-3">AI Model 1</h4>
+                      {ai1DiffError && (
+                        <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+                          {ai1DiffError}
+                        </div>
+                      )}
+                      <textarea
+                        value={ai1DiffInput}
+                        onChange={(e) => {
+                          setAi1DiffInput(e.target.value);
+                          setAi1DiffError('');
+                        }}
+                        className="w-full h-[250px] p-3 border border-blue-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                        placeholder='{}'
+                      />
                     </div>
-                  )}
-                  <textarea
-                    value={ai1DiffInput}
-                    onChange={(e) => {
-                      setAi1DiffInput(e.target.value);
-                      setAi1DiffError('');
-                    }}
-                    className="w-full h-[250px] p-3 border border-blue-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                    placeholder='{}'
-                  />
-                </div>
 
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">AI Model 2</h3>
-                  {ai2DiffError && (
-                    <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
-                      {ai2DiffError}
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                      <h4 className="text-md font-semibold text-gray-900 mb-3">AI Model 2</h4>
+                      {ai2DiffError && (
+                        <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+                          {ai2DiffError}
+                        </div>
+                      )}
+                      <textarea
+                        value={ai2DiffInput}
+                        onChange={(e) => {
+                          setAi2DiffInput(e.target.value);
+                          setAi2DiffError('');
+                        }}
+                        className="w-full h-[250px] p-3 border border-amber-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white"
+                        placeholder='{}'
+                      />
                     </div>
-                  )}
-                  <textarea
-                    value={ai2DiffInput}
-                    onChange={(e) => {
-                      setAi2DiffInput(e.target.value);
-                      setAi2DiffError('');
-                    }}
-                    className="w-full h-[250px] p-3 border border-amber-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white"
-                    placeholder='{}'
-                  />
+                  </div>
                 </div>
               </div>
             ) : (
               <div className="space-y-6">
-                {matchedData && Object.keys(matchedData).length > 0 && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Matched Data</h3>
+                <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Similar Output</h3>
+                  {matchedData && Object.keys(matchedData).length > 0 ? (
                     <pre className="text-sm text-gray-700 whitespace-pre-wrap">{JSON.stringify(matchedData, null, 2)}</pre>
+                  ) : (
+                    <p className="text-sm text-gray-500 italic">No similar output found</p>
+                  )}
+                </div>
+
+                <div className="bg-gray-50 border border-gray-300 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-6">Different Output</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h4 className="text-md font-semibold text-gray-900 mb-3">AI Model 1</h4>
+                      {ai1DiffData && Object.keys(ai1DiffData).length > 0 ? (
+                        <pre className="text-sm text-gray-700 whitespace-pre-wrap">{JSON.stringify(ai1DiffData, null, 2)}</pre>
+                      ) : (
+                        <p className="text-sm text-gray-500 italic">No different output found</p>
+                      )}
+                    </div>
+
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                      <h4 className="text-md font-semibold text-gray-900 mb-3">AI Model 2</h4>
+                      {ai2DiffData && Object.keys(ai2DiffData).length > 0 ? (
+                        <pre className="text-sm text-gray-700 whitespace-pre-wrap">{JSON.stringify(ai2DiffData, null, 2)}</pre>
+                      ) : (
+                        <p className="text-sm text-gray-500 italic">No different output found</p>
+                      )}
+                    </div>
                   </div>
-                )}
-                {ai1DiffData && Object.keys(ai1DiffData).length > 0 && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">AI Model 1</h3>
-                    <pre className="text-sm text-gray-700 whitespace-pre-wrap">{JSON.stringify(ai1DiffData, null, 2)}</pre>
-                  </div>
-                )}
-                {ai2DiffData && Object.keys(ai2DiffData).length > 0 && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">AI Model 2</h3>
-                    <pre className="text-sm text-gray-700 whitespace-pre-wrap">{JSON.stringify(ai2DiffData, null, 2)}</pre>
-                  </div>
-                )}
+                </div>
               </div>
             )}
 
