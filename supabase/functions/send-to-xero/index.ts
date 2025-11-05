@@ -225,14 +225,18 @@ Deno.serve(async (req: Request) => {
     } catch (parseError) {
       // If parsing fails, it might be XML - check if the request was actually successful
       if (xeroResponse.ok && responseText.includes("<Status>OK</Status>")) {
+        // Extract invoice ID from XML if possible
+        const invoiceIdMatch = responseText.match(/<InvoiceID>([^<]+)<\/InvoiceID>/);
+        const invoiceId = invoiceIdMatch ? invoiceIdMatch[1] : null;
+
         return new Response(
           JSON.stringify({
-            error: "Invoice created but response was XML instead of JSON",
-            details: responseText,
-            hint: "The invoice may have been created successfully in Xero. Check the Xero dashboard."
+            success: true,
+            message: "Invoice successfully sent to Xero",
+            invoiceId: invoiceId
           }),
           {
-            status: 500,
+            status: 200,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           }
         );
