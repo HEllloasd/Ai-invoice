@@ -74,6 +74,23 @@ export const UploadHistory = () => {
   const sendToXero = async (item: HistoryItem) => {
     setSendingToXero(item.review_id);
     try {
+      // Send to webhook with route=xero
+      try {
+        await fetch(WEBHOOKS.choice.receiveChoice, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            route: 'xero',
+            review_id: item.review_id,
+          }),
+        });
+      } catch (webhookError) {
+        console.error('Error sending to webhook:', webhookError);
+      }
+
+      // Send to Xero via edge function
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const response = await fetch(`${supabaseUrl}/functions/v1/send-to-xero`, {
         method: 'POST',
