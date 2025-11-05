@@ -131,13 +131,13 @@ export const FileUpload = ({ onFileSelect, onUploadSuccess }: FileUploadProps) =
       abortControllerRef.current.abort();
     }
 
-    // Create new abort controller with extended timeout (2 minutes)
+    // Create new abort controller with extended timeout (5 minutes)
     abortControllerRef.current = new AbortController();
     const timeoutId = setTimeout(() => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
-    }, 120000); // 2 minutes timeout
+    }, 300000); // 5 minutes timeout
 
     const formData = new FormData();
     formData.append('file', file, file.name);
@@ -216,7 +216,7 @@ export const FileUpload = ({ onFileSelect, onUploadSuccess }: FileUploadProps) =
       clearTimeout(timeoutId);
 
       const errorMessage = error.name === 'AbortError'
-        ? 'Webhook timed out after 2 minutes'
+        ? 'Webhook timed out after 5 minutes'
         : `Webhook connection failed: ${error.message || 'Network error'}`;
 
       console.warn(errorMessage, error);
