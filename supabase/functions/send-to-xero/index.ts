@@ -178,9 +178,17 @@ Deno.serve(async (req: Request) => {
       };
     }
 
-    console.log("Invoice data to send:", JSON.stringify(invoiceData));
+    console.log("Invoice data to send:", JSON.stringify(invoiceData, null, 2));
     console.log("Tenant ID:", tokens.tenant_id);
     console.log("Access token (first 20 chars):", accessToken?.substring(0, 20));
+
+    // Validate that invoice has line items
+    if (!invoiceData.LineItems || invoiceData.LineItems.length === 0) {
+      console.warn("Warning: Invoice has no line items!");
+    } else {
+      console.log("Line items count:", invoiceData.LineItems.length);
+      console.log("First line item:", JSON.stringify(invoiceData.LineItems[0], null, 2));
+    }
 
     // Validate we have required data
     if (!tokens.tenant_id) {
@@ -201,6 +209,7 @@ Deno.serve(async (req: Request) => {
           Authorization: `Bearer ${accessToken}`,
           "xero-tenant-id": tokens.tenant_id,
           "Content-Type": "application/json",
+          "Accept": "application/json",
         },
         body: JSON.stringify({ Invoices: [invoiceData] }),
       }
@@ -210,24 +219,25 @@ Deno.serve(async (req: Request) => {
     console.log("Xero response status:", xeroResponse.status);
     console.log("Xero response:", responseText);
 
-    if (!xeroResponse.ok) {
-      return new Response(
-        JSON.stringify({
-          error: "Failed to send to Xero",
-          status: xeroResponse.status,
-          details: responseText
-        }),
-        {
-          status: xeroResponse.status,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
     let xeroResult;
     try {
       xeroResult = JSON.parse(responseText);
     } catch (parseError) {
+      // If parsing fails, it might be XML - check if the request was actually successful
+      if (xeroResponse.ok && responseText.includes("<Status>OK</Status>")) {
+        return new Response(
+          JSON.stringify({
+            error: "Invoice created but response was XML instead of JSON",
+            details: responseText,
+            hint: "The invoice may have been created successfully in Xero. Check the Xero dashboard."
+          }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
       return new Response(
         JSON.stringify({
           error: "Failed to parse Xero response",
@@ -239,6 +249,38 @@ Deno.serve(async (req: Request) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
+    }
+
+    if (!xeroResponse.ok) {
+      return new Response(
+        JSON.stringify({
+          error: "Failed to send to Xero",
+          status: xeroResponse.status,
+          details: xeroResult
+        }),
+        {
+          status: xeroResponse.status,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Check if invoice has errors
+    if (xeroResult.Invoices && xeroResult.Invoices.length > 0) {
+      const invoice = xeroResult.Invoices[0];
+      if (invoice.HasErrors) {
+        return new Response(
+          JSON.stringify({
+            error: "Xero invoice has validation errors",
+            details: invoice,
+            validationErrors: invoice.ValidationErrors
+          }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
     }
 
     return new Response(
