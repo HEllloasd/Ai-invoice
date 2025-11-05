@@ -12,11 +12,14 @@ export const Review = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editableData, setEditableData] = useState<any>(null);
   const [matchedData, setMatchedData] = useState<any>(null);
-  const [differencesData, setDifferencesData] = useState<any>(null);
+  const [ai1DiffData, setAi1DiffData] = useState<any>(null);
+  const [ai2DiffData, setAi2DiffData] = useState<any>(null);
   const [matchedInput, setMatchedInput] = useState<string>('');
-  const [differencesInput, setDifferencesInput] = useState<string>('');
+  const [ai1DiffInput, setAi1DiffInput] = useState<string>('');
+  const [ai2DiffInput, setAi2DiffInput] = useState<string>('');
   const [matchedError, setMatchedError] = useState<string>('');
-  const [differencesError, setDifferencesError] = useState<string>('');
+  const [ai1DiffError, setAi1DiffError] = useState<string>('');
+  const [ai2DiffError, setAi2DiffError] = useState<string>('');
 
   const mockAgent1Data = {
     model: 'AI Agent 1',
@@ -80,16 +83,18 @@ export const Review = () => {
 
   useEffect(() => {
     let initialData;
-    let matched, differences;
+    let matched, ai1Diff, ai2Diff;
     if (webhookResponse) {
       initialData = {
-        ERP: webhookResponse.matched?.ERP || webhookResponse.differences?.ERP || mockAgent1Data.ERP,
-        CRM: webhookResponse.matched?.CRM || webhookResponse.differences?.CRM || mockAgent1Data.CRM
+        ERP: webhookResponse.matched?.ERP || webhookResponse.ai_1_diff?.ERP || mockAgent1Data.ERP,
+        CRM: webhookResponse.matched?.CRM || webhookResponse.ai_1_diff?.CRM || mockAgent1Data.CRM
       };
       matched = webhookResponse.matched || {};
-      differences = webhookResponse.differences || {};
+      ai1Diff = webhookResponse.ai_1_diff || {};
+      ai2Diff = webhookResponse.ai_2_diff || {};
       setMatchedInput(JSON.stringify(matched, null, 2));
-      setDifferencesInput(JSON.stringify(differences, null, 2));
+      setAi1DiffInput(JSON.stringify(ai1Diff, null, 2));
+      setAi2DiffInput(JSON.stringify(ai2Diff, null, 2));
     } else {
       // Use mock data if no webhook response
       initialData = {
@@ -97,13 +102,16 @@ export const Review = () => {
         CRM: mockAgent1Data.CRM
       };
       matched = initialData;
-      differences = {};
+      ai1Diff = {};
+      ai2Diff = {};
       setMatchedInput(JSON.stringify(initialData, null, 2));
-      setDifferencesInput('{}');
+      setAi1DiffInput('{}');
+      setAi2DiffInput('{}');
     }
     setEditableData(initialData);
     setMatchedData(matched);
-    setDifferencesData(differences);
+    setAi1DiffData(ai1Diff);
+    setAi2DiffData(ai2Diff);
   }, [webhookResponse]);
 
 
@@ -204,7 +212,7 @@ export const Review = () => {
                     <button
                       onClick={() => {
                         let hasError = false;
-                        let parsedMatched, parsedDifferences;
+                        let parsedMatched, parsedAi1Diff, parsedAi2Diff;
 
                         try {
                           parsedMatched = JSON.parse(matchedInput);
@@ -215,17 +223,26 @@ export const Review = () => {
                         }
 
                         try {
-                          parsedDifferences = JSON.parse(differencesInput);
-                          setDifferencesError('');
+                          parsedAi1Diff = JSON.parse(ai1DiffInput);
+                          setAi1DiffError('');
                         } catch (err) {
-                          setDifferencesError(`Invalid JSON: ${err instanceof Error ? err.message : 'Unknown error'}`);
+                          setAi1DiffError(`Invalid JSON: ${err instanceof Error ? err.message : 'Unknown error'}`);
+                          hasError = true;
+                        }
+
+                        try {
+                          parsedAi2Diff = JSON.parse(ai2DiffInput);
+                          setAi2DiffError('');
+                        } catch (err) {
+                          setAi2DiffError(`Invalid JSON: ${err instanceof Error ? err.message : 'Unknown error'}`);
                           hasError = true;
                         }
 
                         if (!hasError) {
-                          setEditableData({ ...parsedMatched, ...parsedDifferences });
+                          setEditableData({ ...parsedMatched, ...parsedAi1Diff, ...parsedAi2Diff });
                           setMatchedData(parsedMatched);
-                          setDifferencesData(parsedDifferences);
+                          setAi1DiffData(parsedAi1Diff);
+                          setAi2DiffData(parsedAi2Diff);
                           setIsEditing(false);
                         }
                       }}
@@ -267,25 +284,43 @@ export const Review = () => {
                       setMatchedInput(e.target.value);
                       setMatchedError('');
                     }}
-                    className="w-full h-[300px] p-3 border border-green-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
+                    className="w-full h-[250px] p-3 border border-green-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
+                    placeholder='{}'
+                  />
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">AI Model 1</h3>
+                  {ai1DiffError && (
+                    <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+                      {ai1DiffError}
+                    </div>
+                  )}
+                  <textarea
+                    value={ai1DiffInput}
+                    onChange={(e) => {
+                      setAi1DiffInput(e.target.value);
+                      setAi1DiffError('');
+                    }}
+                    className="w-full h-[250px] p-3 border border-blue-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                     placeholder='{}'
                   />
                 </div>
 
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Differences</h3>
-                  {differencesError && (
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">AI Model 2</h3>
+                  {ai2DiffError && (
                     <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
-                      {differencesError}
+                      {ai2DiffError}
                     </div>
                   )}
                   <textarea
-                    value={differencesInput}
+                    value={ai2DiffInput}
                     onChange={(e) => {
-                      setDifferencesInput(e.target.value);
-                      setDifferencesError('');
+                      setAi2DiffInput(e.target.value);
+                      setAi2DiffError('');
                     }}
-                    className="w-full h-[300px] p-3 border border-amber-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white"
+                    className="w-full h-[250px] p-3 border border-amber-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white"
                     placeholder='{}'
                   />
                 </div>
@@ -298,10 +333,16 @@ export const Review = () => {
                     <pre className="text-sm text-gray-700 whitespace-pre-wrap">{JSON.stringify(matchedData, null, 2)}</pre>
                   </div>
                 )}
-                {differencesData && Object.keys(differencesData).length > 0 && (
+                {ai1DiffData && Object.keys(ai1DiffData).length > 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">AI Model 1</h3>
+                    <pre className="text-sm text-gray-700 whitespace-pre-wrap">{JSON.stringify(ai1DiffData, null, 2)}</pre>
+                  </div>
+                )}
+                {ai2DiffData && Object.keys(ai2DiffData).length > 0 && (
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Differences</h3>
-                    <pre className="text-sm text-gray-700 whitespace-pre-wrap">{JSON.stringify(differencesData, null, 2)}</pre>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">AI Model 2</h3>
+                    <pre className="text-sm text-gray-700 whitespace-pre-wrap">{JSON.stringify(ai2DiffData, null, 2)}</pre>
                   </div>
                 )}
               </div>
