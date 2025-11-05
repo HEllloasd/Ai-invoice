@@ -201,6 +201,8 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    console.log("About to send request to Xero...");
+
     const xeroResponse = await fetch(
       "https://api.xero.com/api.xro/2.0/Invoices",
       {
@@ -215,8 +217,10 @@ Deno.serve(async (req: Request) => {
       }
     );
 
+    console.log("Received response from Xero");
     const responseText = await xeroResponse.text();
     console.log("Xero response status:", xeroResponse.status);
+    console.log("Xero response headers:", Object.fromEntries(xeroResponse.headers.entries()));
     console.log("Xero response:", responseText);
 
     let xeroResult;
@@ -294,8 +298,14 @@ Deno.serve(async (req: Request) => {
       }
     );
   } catch (error) {
+    console.error("Caught error in send-to-xero:", error);
+    console.error("Error stack:", error.stack);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({
+        error: error.message,
+        stack: error.stack,
+        type: error.constructor.name
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
