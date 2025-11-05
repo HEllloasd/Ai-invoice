@@ -161,24 +161,29 @@ export const FileUpload = ({ onFileSelect, onUploadSuccess }: FileUploadProps) =
 
       const data = await response.json();
 
-      // Helper function to transform model_a/model_b to ERP/CRM
+      // Helper function to ensure data has correct structure
       const transformData = (obj: any) => {
         if (!obj) return obj;
 
         const transformed = { ...obj };
 
+        // Handle matched data
         if (obj.matched) {
-          transformed.matched = {
-            ERP: obj.matched.model_a || obj.matched.ERP,
-            CRM: obj.matched.model_b || obj.matched.CRM
-          };
+          transformed.matched = obj.matched;
         }
 
-        if (obj.differences) {
-          transformed.differences = {
-            ERP: obj.differences.model_a || obj.differences.ERP,
-            CRM: obj.differences.model_b || obj.differences.CRM
-          };
+        // Handle ai_1_diff and ai_2_diff from database
+        if (obj.ai_1_diff) {
+          transformed.ai_1_diff = obj.ai_1_diff;
+        }
+
+        if (obj.ai_2_diff) {
+          transformed.ai_2_diff = obj.ai_2_diff;
+        }
+
+        // Legacy: Handle old 'differences' field if it exists
+        if (obj.differences && !obj.ai_1_diff && !obj.ai_2_diff) {
+          transformed.ai_1_diff = obj.differences;
         }
 
         return transformed;
