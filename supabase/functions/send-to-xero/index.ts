@@ -142,7 +142,37 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // Call webhook to get corrected/formatted data
+    const WEBHOOK_URL = Deno.env.get("WEBHOOK_URL");
     let invoiceData = review.final?.ERP || review.final;
+
+    if (WEBHOOK_URL) {
+      try {
+        const webhookResponse = await fetch(WEBHOOK_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            route: "xero",
+            review_id: review_id,
+          }),
+        });
+
+        if (webhookResponse.ok) {
+          const webhookData = await webhookResponse.json();
+          // Use the corrected data from webhook if available
+          if (webhookData && Object.keys(webhookData).length > 0) {
+            invoiceData = webhookData;
+            console.log("Using corrected data from webhook");
+          }
+        } else {
+          console.warn("Webhook call failed, using original data");
+        }
+      } catch (webhookError) {
+        console.warn("Error calling webhook, using original data:", webhookError);
+      }
+    }
 
     // Ensure required Xero fields are present
     if (!invoiceData.Type) {
