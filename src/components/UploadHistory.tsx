@@ -74,23 +74,27 @@ export const UploadHistory = () => {
   const sendToXero = async (item: HistoryItem) => {
     setSendingToXero(item.review_id);
     try {
-      // Send to webhook with route=xero
-      try {
-        await fetch(WEBHOOKS.choice.receiveChoice, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            route: 'xero',
-            review_id: item.review_id,
-          }),
-        });
-      } catch (webhookError) {
-        console.error('Error sending to webhook:', webhookError);
+      // First, get corrected data from webhook
+      const webhookResponse = await fetch(WEBHOOKS.choice.receiveChoice, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          route: 'xero',
+          review_id: item.review_id,
+        }),
+      });
+
+      let correctedData = null;
+      if (webhookResponse.ok) {
+        correctedData = await webhookResponse.json();
+        console.log('Received corrected data from webhook:', correctedData);
+      } else {
+        console.warn('Webhook failed, will use original data');
       }
 
-      // Send to Xero via edge function
+      // Send to Xero via edge function with corrected data
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const response = await fetch(`${supabaseUrl}/functions/v1/send-to-xero`, {
         method: 'POST',
@@ -99,6 +103,7 @@ export const UploadHistory = () => {
         },
         body: JSON.stringify({
           review_id: item.review_id,
+          invoice_data: correctedData,
         }),
       });
 
