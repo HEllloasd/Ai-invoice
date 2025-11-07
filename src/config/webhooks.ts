@@ -6,6 +6,6 @@ export const WEBHOOKS = {
     result: 'https://many-hotels-play.loca.lt/webhook-test/review-result',
   },
   choice: {
-    receiveChoice: 'https://many-hotels-play.loca.lt/webhook-test/receive-choice',
+    receiveChoice: 'https://whole-monkeys-jam.loca.lt/webhook-test/receive-choice',
   },
 } as const;
