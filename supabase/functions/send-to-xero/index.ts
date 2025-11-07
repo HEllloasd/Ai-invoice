@@ -147,8 +147,16 @@ Deno.serve(async (req: Request) => {
     let invoiceData;
     if (invoice_data) {
       // If invoice_data is an array, take the first element
-      invoiceData = Array.isArray(invoice_data) ? invoice_data[0] : invoice_data;
-      console.log("Using invoice data from request");
+      let rawData = Array.isArray(invoice_data) ? invoice_data[0] : invoice_data;
+
+      // Check if the data has a xeroInvoice string that needs to be parsed
+      if (rawData.xeroInvoice && typeof rawData.xeroInvoice === 'string') {
+        invoiceData = JSON.parse(rawData.xeroInvoice);
+        console.log("Using invoice data from request (parsed from xeroInvoice string)");
+      } else {
+        invoiceData = rawData;
+        console.log("Using invoice data from request");
+      }
     } else {
       invoiceData = review.final?.ERP || review.final;
       console.log("Using invoice data from database");
