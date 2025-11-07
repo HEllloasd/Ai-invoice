@@ -1,6 +1,23 @@
 # AI Invoice Processing App
 
-An intelligent invoice processing application that extracts data from PDF invoices, validates and corrects information, and seamlessly sends it to Xero accounting software.
+An intelligent invoice processing application that extracts data from PDF invoices using AI, validates and corrects the information, and seamlessly sends it to Xero accounting software.
+
+## What This App Does
+
+This application streamlines your invoice processing workflow by:
+
+1. **Accepting PDF Invoices**: Upload any PDF invoice through a simple drag-and-drop interface
+2. **AI-Powered Extraction**: Automatically extracts key information from invoices including:
+   - Supplier/customer contact details
+   - Invoice numbers and dates
+   - Line items with descriptions, quantities, and prices
+   - Tax information and totals
+3. **Smart Validation**: Uses AI to validate and correct extracted data for accuracy
+4. **Xero Integration**: Sends validated invoices directly to your Xero accounting system as bills or sales invoices
+5. **Progress Tracking**: Monitor each invoice through the processing pipeline in real-time
+6. **History Management**: View and resend any previously processed invoice
+
+The app eliminates manual data entry, reduces errors, and speeds up your accounts payable/receivable workflow.
 
 ## Features
 
@@ -110,61 +127,115 @@ View all your past uploads:
 
 ### Setting Up n8n Webhooks (Required Before Starting)
 
-The application uses n8n webhooks to process invoices. You **must** configure these webhook URLs before the app will work properly.
+The application uses n8n workflows to process invoices with AI. You **must** configure these webhook URLs before the app will work properly.
 
-#### Step 1: Get Your n8n Webhook URLs
+#### What Are the Webhooks For?
 
-1. In your n8n workflow, locate the webhook nodes
-2. Copy the webhook URLs for:
-   - **PDF Processing Webhook**: Receives uploaded PDFs and extracts data
-   - **Review Result Webhook**: Sends processed invoice data back to the app
-   - **Choice Webhook**: Receives user's choice (Draft/Submit/Authorize)
+This app connects to three n8n webhook endpoints:
 
-#### Step 2: Update Webhook Configuration
+1. **PDF Processing Webhook** (`pdf.dropbox`):
+   - Receives the uploaded PDF invoice file
+   - Extracts text and data from the PDF
+   - Performs AI analysis to identify invoice fields
+   - Returns structured invoice data
 
-Edit the file `src/config/webhooks.ts` and replace the placeholder URLs with your n8n webhook URLs:
+2. **Review Result Webhook** (`review.result`):
+   - Receives the extracted invoice data
+   - Stores the results in the database
+   - Triggers UI updates to show processed data
+
+3. **Choice Webhook** (`choice.receiveChoice`):
+   - Receives the user's selection (Draft/Submit/Authorize)
+   - Applies any final corrections or transformations
+   - Returns Xero-formatted invoice data ready to send
+
+#### How to Change the Webhook URLs
+
+**Step 1: Locate Your n8n Webhook URLs**
+
+In your n8n instance:
+1. Open your invoice processing workflow
+2. Click on each Webhook node
+3. Copy the webhook URL shown (it will look like `https://your-n8n-instance.com/webhook/...`)
+
+**Step 2: Update the Configuration File**
+
+1. Open the file: `src/config/webhooks.ts` in your code editor
+2. Replace the URLs with your own n8n webhook URLs:
 
 ```typescript
 export const WEBHOOKS = {
   pdf: {
-    dropbox: 'https://YOUR-N8N-INSTANCE.com/webhook/pdf-upload',
+    dropbox: 'YOUR_PDF_WEBHOOK_URL_HERE',
   },
   review: {
-    result: 'https://YOUR-N8N-INSTANCE.com/webhook/review-result',
+    result: 'YOUR_REVIEW_WEBHOOK_URL_HERE',
   },
   choice: {
-    receiveChoice: 'https://YOUR-N8N-INSTANCE.com/webhook/receive-choice',
+    receiveChoice: 'YOUR_CHOICE_WEBHOOK_URL_HERE',
   },
-}
+} as const;
 ```
 
-**Example with actual n8n URLs:**
+**Example with real URLs:**
 
 ```typescript
 export const WEBHOOKS = {
   pdf: {
-    dropbox: 'https://n8n.example.com/webhook-test/pdf-upload',
+    dropbox: 'https://n8n.mycompany.com/webhook/invoice-pdf-upload',
   },
   review: {
-    result: 'https://n8n.example.com/webhook-test/review-result',
+    result: 'https://n8n.mycompany.com/webhook/invoice-review-result',
   },
   choice: {
-    receiveChoice: 'https://n8n.example.com/webhook-test/receive-choice',
+    receiveChoice: 'https://n8n.mycompany.com/webhook/invoice-choice',
   },
+} as const;
+```
+
+**Step 3: Save and Restart**
+
+1. Save the `src/config/webhooks.ts` file
+2. If the app is running, stop it with `Ctrl+C` or `Cmd+C`
+3. Restart the app: `npm run dev`
+4. The app will now use your webhook URLs
+
+#### Important Notes
+
+- **Without valid webhook URLs**: Invoices will upload but will get stuck in "Processing" status
+- **Webhook Requirements**: Your n8n workflows must be active and publicly accessible
+- **Testing**: After changing webhooks, upload a test invoice to verify the connection works
+- **Security**: Keep webhook URLs secure as they provide access to your n8n workflows
+- **Localtunnel URLs**: If using localtunnel (like `*.loca.lt`), note that these URLs expire and need to be updated regularly
+
+#### Webhook Data Format
+
+Your n8n workflows should expect and return data in these formats:
+
+**PDF Webhook** receives:
+```json
+{
+  "review_id": "REV-XXXXX-XXXXX",
+  "pdf_url": "https://storage.supabase.co/..."
 }
 ```
 
-#### Step 3: Save and Restart
+**Choice Webhook** receives:
+```json
+{
+  "route": "xero",
+  "review_id": "REV-XXXXX-XXXXX"
+}
+```
 
-After updating the webhook URLs:
-1. Save the `webhooks.ts` file
-2. If the app is running, stop it (Ctrl+C)
-3. Restart with `npm run dev`
+**Choice Webhook** should return:
+```json
+[{
+  "xeroInvoice": "{...JSON string with Xero-formatted invoice...}"
+}]
+```
 
-**Important Notes:**
-- Without valid webhook URLs, invoices will upload but won't be processed
-- Make sure your n8n workflows are active and running
-- Test webhook connectivity if processing fails
+The `xeroInvoice` must include all required Xero fields: `Type`, `Contact`, `Date`, `LineItems` (with `AccountCode` and `TaxType` for each item), etc.
 
 ### Environment Variables
 
@@ -175,18 +246,46 @@ The `.env` file contains Supabase connection details (automatically configured).
 **Upload not working?**
 - Check that PDF is valid and not corrupted
 - Ensure file size is reasonable (under 10MB recommended)
+- Verify Supabase storage bucket permissions
 
-**Processing stuck?**
-- Verify webhook endpoints are accessible
-- Check browser console for errors
+**Processing stuck at "Processing" stage?**
+- **Most Common Issue**: Webhook URLs are incorrect or expired
+- Verify n8n webhook endpoints are accessible (test in browser or with curl)
+- Check that n8n workflows are active and running
+- Look at browser console for 404 or connection errors
+- If using localtunnel URLs, they may have expired - generate new ones and update `src/config/webhooks.ts`
+
+**Invoice sent to Xero but appears empty?**
+- Check that your Choice webhook returns the correct data format
+- Verify the `xeroInvoice` field contains a JSON string with all required Xero fields
+- Each LineItem must have: `Description`, `Quantity`, `UnitAmount`, `AccountCode`, `TaxType`
+- Check Supabase Edge Function logs for parsing errors
 
 **Xero integration issues?**
-- Ensure Xero authentication is configured
-- Verify API credentials are valid
+- Ensure Xero authentication is configured via the `xero-auth` edge function
+- Verify Xero OAuth tokens are not expired in the `xero_tokens` table
+- Check that `XERO_CLIENT_ID` and `XERO_CLIENT_SECRET` are set in environment variables
+- Verify the Xero organization (tenant) is connected
 
 **Can't see upload history?**
 - Check browser console for database connection errors
 - Ensure Supabase is properly configured
+- Verify RLS policies allow anonymous access to the `reviews` table
+
+**Error: "No Xero tokens found"**
+- You need to authenticate with Xero first
+- Run the Xero OAuth flow using the `xero-auth` edge function
+- Tokens are stored in the `xero_tokens` database table
+
+### Debug Checklist
+
+When something isn't working, check these in order:
+
+1. **Browser Console**: Look for JavaScript errors or failed network requests
+2. **Network Tab**: Check if webhook requests are returning 200 status codes
+3. **Database**: Verify the `reviews` table has your upload record with correct status
+4. **n8n Logs**: Check n8n execution logs to see if webhooks are being triggered
+5. **Edge Function Logs**: View Supabase edge function logs for server-side errors
 
 ## Technical Stack
 
