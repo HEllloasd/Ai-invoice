@@ -1,11 +1,11 @@
 export const WEBHOOKS = {
   pdf: {
-    dropbox: 'https://fluffy-waves-show.loca.lt/webhook-test/pdf-upload',
+    dropbox: 'https://whole-monkeys-jam.loca.lt/webhook-test/pdf-upload',
   },
   review: {
-    result: 'https://many-hotels-play.loca.lt/webhook-test/review-result',
+    result: 'https://whole-monkeys-jam.loca.lt/webhook-test/review-result',
   },
   choice: {
-    receiveChoice: 'https://fluffy-waves-show.loca.lt/webhook-test/receive-choice',
+    receiveChoice: 'https://whole-monkeys-jam.loca.lt/webhook-test/receive-choice',
   },
 } as const;
