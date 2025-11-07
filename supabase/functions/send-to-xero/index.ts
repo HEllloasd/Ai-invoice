@@ -192,12 +192,12 @@ Deno.serve(async (req: Request) => {
     // Ensure LineItems have required Xero fields
     if (invoiceData.LineItems && Array.isArray(invoiceData.LineItems)) {
       invoiceData.LineItems = invoiceData.LineItems.map((item: any) => ({
+        ...item,
         Description: item.Description || "",
-        Quantity: item.Quantity || 1,
+        Quantity: item.Quantity !== undefined ? item.Quantity : 1,
         UnitAmount: item.UnitAmount !== undefined ? item.UnitAmount : 0,
         AccountCode: item.AccountCode || "200",
-        TaxType: item.TaxType || "NONE",
-        ...item
+        TaxType: item.TaxType || "NONE"
       }));
     }
 

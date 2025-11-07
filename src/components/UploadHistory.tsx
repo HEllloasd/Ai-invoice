@@ -90,6 +90,7 @@ export const UploadHistory = () => {
       if (webhookResponse.ok) {
         correctedData = await webhookResponse.json();
         console.log('Received corrected data from webhook:', correctedData);
+        console.log('Corrected data LineItems:', correctedData?.LineItems);
       } else {
         console.warn('Webhook failed, will use original data');
       }
