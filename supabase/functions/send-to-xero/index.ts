@@ -179,6 +179,33 @@ Deno.serve(async (req: Request) => {
       };
     }
 
+    // Ensure DueDate is set (default to Date if missing)
+    if (!invoiceData.DueDate && invoiceData.Date) {
+      invoiceData.DueDate = invoiceData.Date;
+    }
+
+    // Ensure LineAmountTypes is set
+    if (!invoiceData.LineAmountTypes) {
+      invoiceData.LineAmountTypes = "Exclusive";
+    }
+
+    // Ensure LineItems have required Xero fields
+    if (invoiceData.LineItems && Array.isArray(invoiceData.LineItems)) {
+      invoiceData.LineItems = invoiceData.LineItems.map((item: any) => ({
+        Description: item.Description || "",
+        Quantity: item.Quantity || 1,
+        UnitAmount: item.UnitAmount !== undefined ? item.UnitAmount : 0,
+        AccountCode: item.AccountCode || "200",
+        TaxType: item.TaxType || "NONE",
+        ...item
+      }));
+    }
+
+    // Add Reference field if not present (use review_id)
+    if (!invoiceData.Reference) {
+      invoiceData.Reference = review_id;
+    }
+
     console.log("Invoice data to send:", JSON.stringify(invoiceData, null, 2));
     console.log("Tenant ID:", tokens.tenant_id);
     console.log("Access token (first 20 chars):", accessToken?.substring(0, 20));
