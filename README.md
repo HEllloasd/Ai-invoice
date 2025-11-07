@@ -108,23 +108,63 @@ View all your past uploads:
 
 ## Configuration
 
-### Webhooks
+### Setting Up n8n Webhooks (Required Before Starting)
 
-Edit `src/config/webhooks.ts` to configure your webhook endpoints:
+The application uses n8n webhooks to process invoices. You **must** configure these webhook URLs before the app will work properly.
+
+#### Step 1: Get Your n8n Webhook URLs
+
+1. In your n8n workflow, locate the webhook nodes
+2. Copy the webhook URLs for:
+   - **PDF Processing Webhook**: Receives uploaded PDFs and extracts data
+   - **Review Result Webhook**: Sends processed invoice data back to the app
+   - **Choice Webhook**: Receives user's choice (Draft/Submit/Authorize)
+
+#### Step 2: Update Webhook Configuration
+
+Edit the file `src/config/webhooks.ts` and replace the placeholder URLs with your n8n webhook URLs:
 
 ```typescript
 export const WEBHOOKS = {
   pdf: {
-    dropbox: 'YOUR_PDF_PROCESSING_WEBHOOK',
+    dropbox: 'https://YOUR-N8N-INSTANCE.com/webhook/pdf-upload',
   },
   review: {
-    result: 'YOUR_REVIEW_RESULT_WEBHOOK',
+    result: 'https://YOUR-N8N-INSTANCE.com/webhook/review-result',
   },
   choice: {
-    receiveChoice: 'YOUR_CHOICE_WEBHOOK',
+    receiveChoice: 'https://YOUR-N8N-INSTANCE.com/webhook/receive-choice',
   },
 }
 ```
+
+**Example with actual n8n URLs:**
+
+```typescript
+export const WEBHOOKS = {
+  pdf: {
+    dropbox: 'https://n8n.example.com/webhook-test/pdf-upload',
+  },
+  review: {
+    result: 'https://n8n.example.com/webhook-test/review-result',
+  },
+  choice: {
+    receiveChoice: 'https://n8n.example.com/webhook-test/receive-choice',
+  },
+}
+```
+
+#### Step 3: Save and Restart
+
+After updating the webhook URLs:
+1. Save the `webhooks.ts` file
+2. If the app is running, stop it (Ctrl+C)
+3. Restart with `npm run dev`
+
+**Important Notes:**
+- Without valid webhook URLs, invoices will upload but won't be processed
+- Make sure your n8n workflows are active and running
+- Test webhook connectivity if processing fails
 
 ### Environment Variables
 
