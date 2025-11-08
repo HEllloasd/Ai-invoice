@@ -28,25 +28,127 @@ The app eliminates manual data entry, reduces errors, and speeds up your account
 - **Upload History**: Track all your uploaded invoices and their status
 - **Xero Integration**: Direct integration with Xero for seamless accounting
 
-## How to Use
+## First Time Setup
 
-### 1. First Time Setup
+When setting up this app for the first time, follow these steps in order:
 
-Before using the app, ensure you have:
-- A Xero account with API access
-- Webhook endpoints configured in `src/config/webhooks.ts`
-- Supabase project configured (connection details in `.env`)
+### Prerequisites
 
-### 2. Starting the Application
+Before you begin, make sure you have:
+- **Node.js** (version 18 or higher) installed
+- **npm** or **yarn** package manager
+- An **n8n instance** with invoice processing workflows set up
+- A **Xero account** with API access (if sending to Xero)
+
+### Step 1: Install Dependencies
+
+Open your terminal in the project directory and run:
 
 ```bash
 npm install
+```
+
+This installs all required packages including React, Supabase client, and other dependencies.
+
+### Step 2: Configure Supabase (Already Done)
+
+✅ **Good news**: The Supabase database and storage are already configured!
+
+The `.env` file contains your Supabase connection details:
+- `VITE_SUPABASE_URL` - Your Supabase project URL
+- `VITE_SUPABASE_ANON_KEY` - Public API key for frontend access
+
+**Database tables** are already created via migrations:
+- `reviews` - Stores invoice processing records
+- `xero_tokens` - Stores Xero authentication tokens
+
+**Storage bucket** is ready:
+- `invoices` - Stores uploaded PDF files with public access
+
+**Edge functions** are deployed:
+- `send-to-xero` - Sends invoices to Xero API
+- `xero-auth` - Handles Xero OAuth authentication
+
+### Step 3: Configure n8n Webhooks (REQUIRED)
+
+This is the **most important step**. Without webhook configuration, invoices won't be processed.
+
+1. **Get your n8n webhook URLs**:
+   - Open your n8n workflow
+   - Click on each Webhook node
+   - Copy the webhook URL (e.g., `https://n8n.example.com/webhook/...`)
+
+2. **Edit the configuration file**:
+   - Open `src/config/webhooks.ts`
+   - Replace the placeholder URLs with your actual n8n webhooks:
+
+   ```typescript
+   export const WEBHOOKS = {
+     pdf: {
+       dropbox: 'YOUR_PDF_PROCESSING_WEBHOOK_URL',
+     },
+     review: {
+       result: 'YOUR_REVIEW_RESULT_WEBHOOK_URL',
+     },
+     choice: {
+       receiveChoice: 'YOUR_CHOICE_WEBHOOK_URL',
+     },
+   } as const;
+   ```
+
+3. **Save the file**
+
+See the "Setting Up n8n Webhooks" section below for detailed instructions.
+
+### Step 4: Configure Xero (Optional but Recommended)
+
+If you want to send invoices to Xero, you need to set up OAuth authentication:
+
+1. **Create a Xero app**:
+   - Go to https://developer.xero.com/
+   - Create a new app
+   - Note your `Client ID` and `Client Secret`
+
+2. **Set environment variables** (in Supabase dashboard):
+   - Go to your Supabase project settings
+   - Navigate to Edge Functions → Environment Variables
+   - Add:
+     - `XERO_CLIENT_ID` = your Xero client ID
+     - `XERO_CLIENT_SECRET` = your Xero client secret
+
+3. **Run the OAuth flow**:
+   - You'll need to authenticate once to get initial tokens
+   - Tokens are stored in the `xero_tokens` table
+   - The app automatically refreshes expired tokens
+
+### Step 5: Start the Application
+
+```bash
+npm run dev
+```
+
+The app will open in your browser at `http://localhost:5173`
+
+### Step 6: Test the Setup
+
+1. Click "Upload New Invoice"
+2. Upload a test PDF invoice
+3. Watch the progress page - it should show processing status
+4. If it gets stuck, check the Troubleshooting section
+
+---
+
+## How to Use
+
+### 1. Starting the Application (After Setup)
+
+```bash
 npm run dev
 ```
 
 The app will open in your browser.
 
-### 3. Uploading an Invoice
+### 2. Uploading an Invoice
 
 1. **Welcome Screen**: Click "Upload New Invoice" to begin
 2. **Upload Page**:
@@ -54,7 +156,7 @@ The app will open in your browser.
    - Only PDF files are accepted
    - The file will be uploaded to secure storage automatically
 
-### 4. Processing
+### 3. Processing
 
 Once uploaded, the app will:
 1. Store your invoice securely
@@ -69,7 +171,7 @@ Once uploaded, the app will:
 - **Reviewed**: Data extraction complete
 - **Final**: Ready for review
 
-### 5. Reviewing Invoice Data
+### 4. Reviewing Invoice Data
 
 On the Review page, you'll see:
 - **Contact Information**: Supplier/customer details
@@ -81,7 +183,7 @@ On the Review page, you'll see:
 - **Send to Xero**: Confirms data is correct and sends to Xero
 - **Go Back**: Return to make changes or upload a different invoice
 
-### 6. Sending to Xero
+### 5. Sending to Xero
 
 When you click "Send to Xero":
 1. You'll be asked to choose the download type:
@@ -91,7 +193,7 @@ When you click "Send to Xero":
 2. The invoice is sent via the Xero API
 3. You'll see a success confirmation
 
-### 7. Upload History
+### 6. Upload History
 
 View all your past uploads:
 - Click "View Upload History" from the Welcome page
