@@ -50,6 +50,16 @@ npm install
 
 This installs all required packages including React, Supabase client, and other dependencies.
 
+### Step 1.5: Copy Environment File
+
+**IMPORTANT**: Copy the `.env.example` file to `.env`:
+
+```bash
+cp .env.example .env
+```
+
+This file contains the shared Supabase connection details needed for the app to work. Without this file, the app will not load.
+
 ### Step 2: Configure Supabase (Already Done - Shared Database)
 
 ✅ **Good news**: The Supabase database and storage are already configured and ready to use!
@@ -351,6 +361,12 @@ The `xeroInvoice` must include all required Xero fields: `Type`, `Contact`, `Dat
 The `.env` file contains Supabase connection details (automatically configured).
 
 ## Troubleshooting
+
+**App won't load or shows blank page?**
+- **Most Common Issue**: Missing `.env` file
+- Copy `.env.example` to `.env`: `cp .env.example .env`
+- Restart the development server: Stop with `Ctrl+C` and run `npm run dev` again
+- Check browser console for error messages
 
 **Upload not working?**
 - Check that PDF is valid and not corrupted
