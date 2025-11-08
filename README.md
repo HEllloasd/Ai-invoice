@@ -50,24 +50,44 @@ npm install
 
 This installs all required packages including React, Supabase client, and other dependencies.
 
-### Step 2: Configure Supabase (Already Done)
+### Step 2: Configure Supabase (Already Done - Shared Database)
 
-✅ **Good news**: The Supabase database and storage are already configured!
+✅ **Good news**: The Supabase database and storage are already configured and ready to use!
 
-The `.env` file contains your Supabase connection details:
-- `VITE_SUPABASE_URL` - Your Supabase project URL
+**📌 Important: This is a shared database setup**
+- All users connect to the **same Supabase instance**
+- The `.env` file contains the shared connection details
+- Everyone using this app will see the same invoices and upload history
+- All data is stored in one centralized location
+
+**What's included:**
+
+The `.env` file contains the Supabase connection details:
+- `VITE_SUPABASE_URL` - Shared Supabase project URL
 - `VITE_SUPABASE_ANON_KEY` - Public API key for frontend access
 
 **Database tables** are already created via migrations:
-- `reviews` - Stores invoice processing records
+- `reviews` - Stores invoice processing records (shared by all users)
 - `xero_tokens` - Stores Xero authentication tokens
 
 **Storage bucket** is ready:
-- `invoices` - Stores uploaded PDF files with public access
+- `invoices` - Stores uploaded PDF files with public access (shared)
 
 **Edge functions** are deployed:
 - `send-to-xero` - Sends invoices to Xero API
 - `xero-auth` - Handles Xero OAuth authentication
+
+**Benefits of this setup:**
+- ✅ Zero configuration needed - just install and run
+- ✅ No Supabase account required
+- ✅ Centralized data management
+- ✅ Team collaboration - everyone sees all invoices
+- ✅ No database setup or migration needed
+
+**Trade-offs:**
+- ⚠️ All users share the same data (no data isolation)
+- ⚠️ Everyone can view and resend any invoice
+- ⚠️ Suitable for team/internal use, not for distributing to external users
 
 ### Step 3: Configure n8n Webhooks (REQUIRED)
 
