@@ -100,26 +100,13 @@ This is the **most important step**. Without webhook configuration, invoices won
 
 See the "Setting Up n8n Webhooks" section below for detailed instructions.
 
-### Step 4: Configure Xero (Optional but Recommended)
+### Step 4: Configure Xero (Already Done)
 
-If you want to send invoices to Xero, you need to set up OAuth authentication:
+✅ **Good news**: Xero integration is already configured in Supabase!
 
-1. **Create a Xero app**:
-   - Go to https://developer.xero.com/
-   - Create a new app
-   - Note your `Client ID` and `Client Secret`
-
-2. **Set environment variables** (in Supabase dashboard):
-   - Go to your Supabase project settings
-   - Navigate to Edge Functions → Environment Variables
-   - Add:
-     - `XERO_CLIENT_ID` = your Xero client ID
-     - `XERO_CLIENT_SECRET` = your Xero client secret
-
-3. **Run the OAuth flow**:
-   - You'll need to authenticate once to get initial tokens
-   - Tokens are stored in the `xero_tokens` table
-   - The app automatically refreshes expired tokens
+- `XERO_CLIENT_ID` and `XERO_CLIENT_SECRET` are set in edge function environment variables
+- OAuth tokens are stored in the `xero_tokens` table
+- The app automatically refreshes expired tokens
 
 ### Step 5: Start the Application
 
